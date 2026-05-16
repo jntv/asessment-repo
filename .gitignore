@@ -1,0 +1,11 @@
+.venv/
+.env
+.env.local
+data/raw/
+data/parquet/
+*.pyc
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
+*.log
+*.csv

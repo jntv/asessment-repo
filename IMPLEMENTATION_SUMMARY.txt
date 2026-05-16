@@ -1,0 +1,180 @@
+================================================================================
+UHC DATA PIPELINE - IMPLEMENTATION COMPLETE
+================================================================================
+
+WHAT WAS BUILT:
+==============
+
+1. Master Pipeline Script: src/pipeline.py
+   - ONE script that does EVERYTHING
+   - Reads index files
+   - Downloads files one-by-one
+   - Parses JSON to parquet (streaming with ijson)
+   - Uploads to S3 (or saves locally)
+   - Loads to Snowflake
+   - Tracks progress in CSV
+   - Can RESUME from where it left off
+
+2. Support Modules (Used by Pipeline):
+   - src/config.py       - AWS S3 configuration
+   - src/download.py     - Download and unzip logic
+   - src/parse.py        - Stream-parse JSON to parquet
+   - src/load_snowflake.py - Load parquet to Snowflake
+
+3. Progress Tracking:
+   - File: files/index_file/progress.csv
+   - Columns: url, plan_name, plan_id, reporting_entity, status, downloaded_at, parsed_at, error_message
+   - Status: pending | parsed | failed
+   - Automatically created and updated by pipeline
+
+4. Quick Start Guide:
+   - File: QUICKSTART.md
+   - How to run the pipeline
+   - How to resume if stopped
+   - Troubleshooting
+
+================================================================================
+HOW TO RUN:
+===========
+
+Step 1: Activate environment
+  .\.venv\Scripts\Activate.ps1
+
+Step 2: Check .env is configured
+  STORAGE_MODE=LOCAL (or S3)
+  Snowflake credentials
+  AWS credentials (if using S3)
+
+Step 3: Run the pipeline
+  python src/pipeline.py
+
+That's it. The pipeline will:
+  - Extract ~20+ URLs from index files
+  - Download each one-by-one
+  - Parse to parquet
+  - Track progress
+  - Load to Snowflake
+
+If you stop it (Ctrl+C), just run it again and it resumes from where it left off.
+
+================================================================================
+KEY FEATURES:
+=============
+
+✓ One Master Script
+  - No need to run multiple commands
+  - No manual orchestration
+
+✓ Progress Tracking
+  - CSV file tracks each file
+  - Shows which files are done, pending, failed
+
+✓ Resume Capability
+  - Stop anytime with Ctrl+C
+  - Run again, it continues from next pending file
+  - No duplicate processing
+
+✓ Streaming JSON Parsing
+  - Uses ijson for large files
+  - Memory efficient (files can be 100MB+)
+  - Doesn't load entire file in memory
+
+✓ S3 Support
+  - Save parquet to S3 (STORAGE_MODE=S3)
+  - Or save locally (STORAGE_MODE=LOCAL)
+  - Both modes supported, just change .env
+
+✓ Error Handling
+  - Failed files logged in progress.csv
+  - Can see error message
+  - Doesn't stop entire pipeline
+
+================================================================================
+STORAGE MODES:
+==============
+
+LOCAL Mode (Default):
+  - Parquet files saved to data/parquet/
+  - Uploaded to Snowflake via PUT command
+  - Good for development/testing
+  - Set: STORAGE_MODE=LOCAL
+
+S3 Mode:
+  - Parquet files uploaded to AWS S3
+  - Loaded to Snowflake from S3 external stage
+  - Production-ready cloud setup
+  - Set: STORAGE_MODE=S3 in .env
+
+Switch between modes just by changing STORAGE_MODE in .env and rerunning.
+
+================================================================================
+FILES PROCESSED:
+================
+
+The pipeline will:
+1. Read all index files in files/index_file/ (e.g., *index.json)
+2. Extract all in_network_files URLs
+3. For each URL:
+   - Download (might be .json.gz or .json)
+   - Unzip if needed
+   - Get the JSON file
+   - Stream-parse with ijson
+   - Extract rows (flattened)
+   - Create parquet file
+   - Upload to S3 (or keep locally)
+   - Delete temporary JSON file
+   - Update progress CSV
+
+4. After all files processed:
+   - Load all parquet files to Snowflake
+   - Append to uhc_tic.staging.rates_raw table
+
+================================================================================
+CHECKING PROGRESS:
+==================
+
+During Run:
+  - Watch console output
+  - See file being processed
+  - See success/failure
+
+After Run:
+  - Check files/index_file/progress.csv
+  - Shows each file and its status
+  - Shows error messages if any failed
+
+In Snowflake:
+  SELECT COUNT(*) FROM uhc_tic.staging.rates_raw;
+  SELECT * FROM uhc_tic.staging.rates_raw LIMIT 10;
+
+================================================================================
+NEXT STEPS:
+===========
+
+1. Run the pipeline:
+   python src/pipeline.py
+
+2. Wait for it to complete (or stop with Ctrl+C if needed)
+
+3. Check progress:
+   - Look at files/index_file/progress.csv
+   - Check Snowflake for loaded data
+
+4. Analyze in Snowflake:
+   - Price variations
+   - Negotiation arrangements
+   - Plan coverage
+   - Data quality
+
+5. Create charts and insights
+   - Export from Snowflake
+   - Use Jupyter notebooks for analysis
+
+================================================================================
+READY TO GO!
+============
+
+The pipeline is ready. Just run:
+  python src/pipeline.py
+
+Everything else is automated.
