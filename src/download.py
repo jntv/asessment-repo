@@ -111,22 +111,38 @@ def get_sizes(manifest_csv, out_csv="files/index_file/manifest_sized.csv"):
     print(f"Total size of all files: {total_gb:.1f} GB (compressed)")
 
 
-def download_one(url, out_dir="files/network_files"):
-    """Download a single file, unzip it, and return the unzipped path."""
+def download_one(url, out_dir="files/network_files", max_size_gb=2):
+    """Download a single file, unzip it, and return the unzipped path.
+
+    Args:
+        url: File URL to download
+        out_dir: Output directory
+        max_size_gb: Maximum file size in GB (default: 2)
+    """
     pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
     name = url.rsplit("/", 1)[-1].split("?")[0]
     gz_path = pathlib.Path(out_dir) / name
     json_path = gz_path.with_suffix("")  # Remove .gz to get .json
+
+    max_size_bytes = max_size_gb * 1024**3
 
     # If already unzipped, skip
     if json_path.exists() and json_path.stat().st_size > 0:
         return json_path, "skipped (already unzipped)"
 
     try:
-        # Download with browser headers (server blocks requests without User-Agent)
+        # Check file size before downloading
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }
+        head_resp = requests.head(url, allow_redirects=True, timeout=20, headers=headers)
+        file_size = int(head_resp.headers.get("Content-Length", 0))
+
+        if file_size > max_size_bytes:
+            size_gb = file_size / (1024**3)
+            return None, f"skipped (file too large: {size_gb:.1f} GB > {max_size_gb} GB limit)"
+
+        # Download with browser headers (server blocks requests without User-Agent)
         with requests.get(url, stream=True, timeout=120, headers=headers) as r:
             r.raise_for_status()
             tmp = gz_path.with_suffix(gz_path.suffix + ".part")
