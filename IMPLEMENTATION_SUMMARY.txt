@@ -61,30 +61,30 @@ If you stop it (Ctrl+C), just run it again and it resumes from where it left off
 KEY FEATURES:
 =============
 
-✓ One Master Script
+[OK] One Master Script
   - No need to run multiple commands
   - No manual orchestration
 
-✓ Progress Tracking
+[OK] Progress Tracking
   - CSV file tracks each file
   - Shows which files are done, pending, failed
 
-✓ Resume Capability
+[OK] Resume Capability
   - Stop anytime with Ctrl+C
   - Run again, it continues from next pending file
   - No duplicate processing
 
-✓ Streaming JSON Parsing
+[OK] Streaming JSON Parsing
   - Uses ijson for large files
   - Memory efficient (files can be 100MB+)
   - Doesn't load entire file in memory
 
-✓ S3 Support
+[OK] S3 Support
   - Save parquet to S3 (STORAGE_MODE=S3)
   - Or save locally (STORAGE_MODE=LOCAL)
   - Both modes supported, just change .env
 
-✓ Error Handling
+[OK] Error Handling
   - Failed files logged in progress.csv
   - Can see error message
   - Doesn't stop entire pipeline

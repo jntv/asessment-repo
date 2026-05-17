@@ -12,7 +12,6 @@ from config import upload_to_s3, S3_PREFIX, STORAGE_MODE, validate_aws_config
 logger = logging.getLogger(__name__)
 
 def get_memory_mb():
-    """Get current memory usage in MB"""
     return psutil.Process().memory_info().rss / 1024 / 1024
 
 # Parse ALL code types - don't filter, let Snowflake handle filtering if needed
@@ -29,7 +28,7 @@ else:
 
 
 def flatten(file_path):
-    """Stream-parse JSON file using ijson (memory-efficient)."""
+    """Parse JSON file using ijson"""
     file_path_str = str(file_path)
 
     # Try to open as gzip first if it has .gz extension, fall back to plain JSON
@@ -108,7 +107,7 @@ def flatten(file_path):
 
 
 def file_to_parquet(in_path, out_dir="data/parquet", batch=1000):
-    """Convert JSON to parquet, streaming to control memory."""
+    """Convert JSON file to Parquet format"""
     out_dir = Path(out_dir)
     out_path = out_dir / (Path(in_path).stem + ".parquet")
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -182,7 +181,7 @@ def file_to_parquet(in_path, out_dir="data/parquet", batch=1000):
 
 
 def parse_all(raw_dir="files/network_files", out_dir="data/parquet"):
-    """Parse all JSON files in directory."""
+    """Parse all JSON files to Parquet"""
     raw_dir = Path(raw_dir)
     raw_files = sorted(raw_dir.glob("*.json"))
     print(f"Found {len(raw_files)} files")

@@ -1,7 +1,6 @@
 """
-Master Pipeline for UHC Data Processing
-Orchestrates: Extract -> Download -> Parse -> Load
-Tracks progress in CSV, resumes from last successful file
+UHC Healthcare Data Pipeline
+Handles downloading, parsing, and loading healthcare pricing data from UnitedHealthcare
 """
 
 import os, sys, json, csv, logging, psutil
@@ -77,7 +76,6 @@ def save_progress(all_urls):
         w.writerows(all_urls)
 
 def get_memory_usage():
-    """Get current memory usage in MB"""
     process = psutil.Process()
     return process.memory_info().rss / 1024 / 1024
 

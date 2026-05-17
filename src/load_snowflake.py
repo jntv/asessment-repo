@@ -6,7 +6,7 @@ from config import STORAGE_MODE
 load_dotenv()
 
 def setup_s3_stage(cur):
-    """Create S3 external stage if it doesn't exist (S3 mode only)."""
+    """Create S3 external stage in Snowflake"""
     from config import SF_S3_ROLE, S3_BUCKET, S3_PREFIX
 
     if not SF_S3_ROLE:
@@ -22,22 +22,18 @@ def setup_s3_stage(cur):
 
     try:
         cur.execute(stage_sql)
-        print("✓ S3 stage ready")
+        print("[OK] S3 stage ready")
     except Exception as e:
         # Stage might already exist; verify with a list command
         try:
             cur.execute("LIST @s3_stage LIMIT 1")
-            print("✓ S3 stage exists and is accessible")
+            print("[OK] S3 stage exists and is accessible")
         except Exception as verify_error:
             raise ValueError(f"Failed to create/access S3 stage: {e}") from verify_error
 
 
 def load_snowflake():
-    """Load all parquet files from S3 to Snowflake.
-
-    Parquet files are uploaded to S3 by parse.py during the parse step.
-    This function loads them into Snowflake from the S3 stage.
-    """
+    """Load parquet files from S3 into Snowflake"""
     conn = snowflake.connector.connect(
         user=os.environ["SF_USER"],
         password=os.environ["SF_PASSWORD"],
@@ -72,7 +68,7 @@ def load_snowflake():
         print("Uploading to internal stage...")
         for pf in parquet_files:
             cur.execute(f"PUT file://{pf.absolute()} @pq_stage")
-            print(f"  ✓ {pf.name}")
+            print(f"  [OK] {pf.name}")
 
         stage_name = "@pq_stage"
 

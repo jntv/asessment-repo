@@ -112,14 +112,7 @@ def get_sizes(manifest_csv, out_csv="files/index_file/manifest_sized.csv"):
 
 
 def download_one(url, out_dir="files/network_files", max_size_gb=0.5, max_unzip_size_gb=1):
-    """Download a single file, unzip it, and return the unzipped path.
-
-    Args:
-        url: File URL to download
-        out_dir: Output directory
-        max_size_gb: Maximum compressed file size in GB (default: 0.5)
-        max_unzip_size_gb: Maximum uncompressed file size in GB (default: 1)
-    """
+    """Download file from URL and decompress it"""
     import logging
     logger = logging.getLogger(__name__)
 
@@ -165,15 +158,13 @@ def download_one(url, out_dir="files/network_files", max_size_gb=0.5, max_unzip_
 
         logger.info(f"[DOWNLOAD] Download complete, decompressing...")
 
-        # Try to unzip, but handle plain JSON files (some servers return plain JSON despite .gz extension)
         try:
-            logger.info(f"[DECOMPRESS] Starting gzip decompression...")
-            # Hard limit: stop if decompressed file exceeds 1GB (safety check)
-            max_decompress_bytes = 1 * 1024**3  # 1GB safety limit
+            logger.info(f"[DECOMPRESS] Starting decompression...")
+            max_decompress_bytes = 1 * 1024**3
 
             with gzip.open(gz_path, "rb") as f_in:
                 with open(json_path, "wb") as f_out:
-                    chunk_size = 8 * 1024 * 1024  # 8MB chunks to stream without loading entire file
+                    chunk_size = 8 * 1024 * 1024
                     bytes_written = 0
                     while True:
                         chunk = f_in.read(chunk_size)
@@ -181,9 +172,8 @@ def download_one(url, out_dir="files/network_files", max_size_gb=0.5, max_unzip_
                             break
                         bytes_written += len(chunk)
 
-                        # Safety check: stop if exceeds 1GB
                         if bytes_written > max_decompress_bytes:
-                            logger.warning(f"[DECOMPRESS] STOPPED: Exceeds 1GB limit ({bytes_written / (1024**3):.2f} GB)")
+                            logger.warning(f"[DECOMPRESS] File too large, stopping")
                             f_out.close()
                             json_path.unlink()
                             gz_path.unlink()
@@ -191,7 +181,7 @@ def download_one(url, out_dir="files/network_files", max_size_gb=0.5, max_unzip_
 
                         f_out.write(chunk)
 
-                    logger.info(f"[DECOMPRESS] Success: {bytes_written / (1024**2):.1f} MB")
+                    logger.info(f"[DECOMPRESS] Done: {bytes_written / (1024**2):.1f} MB")
             gz_path.unlink()
         except (gzip.BadGzipFile, OSError) as e:
             # Not actually gzipped - treat as plain JSON
