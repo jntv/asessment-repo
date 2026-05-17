@@ -84,9 +84,6 @@ def get_memory_usage():
 def process_file(url, plan_name, plan_id, reporting_entity):
     json_path = None
     try:
-        mem_before = get_memory_usage()
-        logger.info(f"Starting download. Memory: {mem_before:.1f}MB")
-
         print("  Downloading...")
         json_path, status = download_one(url)
         if not json_path:
@@ -94,16 +91,11 @@ def process_file(url, plan_name, plan_id, reporting_entity):
             return False, None, f"Download failed: {status}"
 
         json_size_mb = Path(json_path).stat().st_size / 1024 / 1024
-        mem_after_dl = get_memory_usage()
-        logger.info(f"Downloaded: {Path(json_path).name} ({json_size_mb:.1f}MB). Memory: {mem_after_dl:.1f}MB")
+        logger.info(f"Downloaded: {Path(json_path).name} ({json_size_mb:.1f}MB)")
         print(f"  Downloaded: {Path(json_path).name} ({json_size_mb:.1f}MB)")
 
-        logger.info(f"Starting parse. Memory: {mem_after_dl:.1f}MB")
         print("  Parsing to parquet...")
         parquet_path, parse_status = file_to_parquet(json_path)
-
-        mem_after_parse = get_memory_usage()
-        logger.info(f"Parse completed. Memory: {mem_after_parse:.1f}MB")
 
         if not parquet_path:
             logger.error(f"Parse failed: {parse_status}")
@@ -126,18 +118,12 @@ def process_file(url, plan_name, plan_id, reporting_entity):
         try:
             Path(json_path).unlink()
             logger.info(f"Cleaned up: {Path(json_path).name}")
-            print(f"  Cleaned up: {Path(json_path).name}")
         except Exception as cleanup_error:
             logger.warning(f"Could not delete {Path(json_path).name}: {cleanup_error}")
-            print(f"  Warning: Could not delete {Path(json_path).name}: {cleanup_error}")
-
-        mem_final = get_memory_usage()
-        logger.info(f"File complete. Memory: {mem_final:.1f}MB (delta: {mem_final - mem_before:.1f}MB)")
 
         return True, parquet_path, None
     except Exception as e:
-        logger.exception(f"Exception in process_file: {e}")
-        logger.info(f"Current memory: {get_memory_usage():.1f}MB")
+        logger.exception(f"Error processing file: {e}")
 
         # Clean up on error too
         if json_path and Path(json_path).exists():

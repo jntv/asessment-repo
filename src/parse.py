@@ -119,50 +119,31 @@ def file_to_parquet(in_path, out_dir="data/parquet", batch=1000):
     writer = None
     buf = []
     row_count = 0
-    max_memory = 0
-    memory_start = get_memory_mb()
-
-    logger.info(f"Starting parse of {Path(in_path).name}. Initial memory: {memory_start:.1f}MB")
 
     try:
         for row in flatten(in_path):
             buf.append(row)
             row_count += 1
 
-            # Log memory every 10k rows
-            if row_count % 10000 == 0:
-                current_mem = get_memory_mb()
-                max_memory = max(max_memory, current_mem)
-                logger.info(f"  Parsed {row_count} rows. Memory: {current_mem:.1f}MB (peak: {max_memory:.1f}MB)")
-
             if len(buf) >= batch:
-                logger.debug(f"  Writing batch of {len(buf)} rows at row {row_count}. Memory before write: {get_memory_mb():.1f}MB")
                 tbl = pa.Table.from_pylist(buf)
                 if writer is None:
                     writer = pq.ParquetWriter(out_path, tbl.schema, compression="zstd")
                 writer.write_table(tbl)
-                mem_after = get_memory_mb()
-                max_memory = max(max_memory, mem_after)
-                logger.debug(f"  Batch written. Memory after: {mem_after:.1f}MB")
                 buf = []
 
         if buf:
-            logger.info(f"Writing final batch of {len(buf)} rows. Memory: {get_memory_mb():.1f}MB")
             tbl = pa.Table.from_pylist(buf)
             if writer is None:
                 writer = pq.ParquetWriter(out_path, tbl.schema, compression="zstd")
             writer.write_table(tbl)
-            mem_after = get_memory_mb()
-            max_memory = max(max_memory, mem_after)
-            logger.info(f"Final batch written. Memory: {mem_after:.1f}MB")
 
         if writer:
             writer.close()
 
-        logger.info(f"Parse complete. Total rows: {row_count}. Peak memory: {max_memory:.1f}MB (delta: {max_memory - memory_start:.1f}MB)")
+        logger.info(f"Parsed {row_count} rows")
     except Exception as e:
-        current_mem = get_memory_mb()
-        logger.exception(f"Error during parsing at row {row_count}. Current memory: {current_mem:.1f}MB. Error: {e}")
+        logger.exception(f"Parse error at row {row_count}: {e}")
         if out_path.exists():
             out_path.unlink()
         return None, f"error: {e}"
