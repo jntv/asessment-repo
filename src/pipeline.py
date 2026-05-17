@@ -110,15 +110,17 @@ def process_file(url, plan_name, plan_id, reporting_entity):
             return False, None, f"Parse failed: {parse_status}"
 
         # Handle both local and S3 paths
-        if STORAGE_MODE == "S3":
-            # S3 path - can't stat remotely, just log the URI
+        if isinstance(parquet_path, str) and parquet_path.startswith("s3://"):
+            # S3 URI returned after upload - can't stat remotely
+            filename = parquet_path.split('/')[-1]
             logger.info(f"Uploaded to S3: {parquet_path}")
-            print(f"  Uploaded: {parquet_path.split('/')[-1]}")
+            print(f"  Uploaded: {filename}")
         else:
             # Local path - get file size
-            parquet_size_mb = Path(parquet_path).stat().st_size / 1024 / 1024
-            logger.info(f"Parsed: {Path(parquet_path).name} ({parquet_size_mb:.1f}MB)")
-            print(f"  Parsed: {Path(parquet_path).name} ({parquet_size_mb:.1f}MB)")
+            parquet_path = Path(parquet_path)
+            parquet_size_mb = parquet_path.stat().st_size / 1024 / 1024
+            logger.info(f"Parsed: {parquet_path.name} ({parquet_size_mb:.1f}MB)")
+            print(f"  Parsed: {parquet_path.name} ({parquet_size_mb:.1f}MB)")
 
         # Clean up: Delete JSON file after successful parsing
         try:
