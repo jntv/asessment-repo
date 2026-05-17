@@ -28,90 +28,53 @@ else:
 
 
 def flatten(file_path):
-    """Stream-parse JSON file and yield flattened rows."""
+    """Stream-parse JSON file using ijson (memory-efficient)."""
     file_path_str = str(file_path)
-    f = gzip.open(file_path, "rb") if file_path_str.endswith(".gz") else open(file_path, "r")
+    f = gzip.open(file_path, "rb") if file_path_str.endswith(".gz") else open(file_path, "rb")
 
     try:
-        if file_path_str.endswith(".gz"):
-            parser = ijson.parse(f)
-            scalars = {}
-            for prefix, evt, val in parser:
-                if prefix in ("reporting_entity_name", "plan_name", "plan_id", "plan_market_type", "last_updated_on"):
-                    scalars[prefix] = val
-                if prefix == "in_network" and evt == "start_array":
-                    break
+        # Use ijson for both .gz and .json files (streaming, not loading into memory)
+        parser = ijson.parse(f)
+        scalars = {}
 
-            for inn in ijson.items(parser, "in_network.item", multiple_values=False):
-                if inn.get("billing_code_type") not in WANTED_CODE_TYPES:
-                    continue
-                for nr in inn.get("negotiated_rates", []):
-                    for pg in nr.get("provider_groups", []):
-                        npis = pg.get("npi") or []
-                        tin = pg.get("tin") or {}
-                        for price in nr.get("negotiated_prices", []):
-                            yield {
-                                "plan_name": scalars.get("plan_name"),
-                                "plan_id": scalars.get("plan_id"),
-                                "plan_market_type": scalars.get("plan_market_type"),
-                                "reporting_entity_name": scalars.get("reporting_entity_name"),
-                                "last_updated_on": scalars.get("last_updated_on"),
-                                "billing_code_type": inn.get("billing_code_type"),
-                                "billing_code": inn.get("billing_code"),
-                                "service_name": inn.get("name"),
-                                "service_description": inn.get("description"),
-                                "negotiation_arrangement": inn.get("negotiation_arrangement"),
-                                "tin_type": tin.get("type"),
-                                "tin_value": tin.get("value"),
-                                "npi_count": len(npis),
-                                "npi_sample": npis[0] if npis else None,
-                                "negotiated_type": price.get("negotiated_type"),
-                                "negotiated_rate": price.get("negotiated_rate"),
-                                "billing_class": price.get("billing_class"),
-                                "expiration_date": price.get("expiration_date"),
-                                "service_codes": ",".join(price.get("service_code") or []),
-                                "modifiers": ",".join(price.get("billing_code_modifier") or []),
-                            }
-        else:
-            with open(file_path, "r") as json_f:
-                data = json.load(json_f)
-                scalars = {
-                    "reporting_entity_name": data.get("reporting_entity_name"),
-                    "plan_name": data.get("plan_name"),
-                    "plan_id": data.get("plan_id"),
-                    "plan_market_type": data.get("plan_market_type"),
-                    "last_updated_on": data.get("last_updated_on"),
-                }
-                for inn in data.get("in_network", []):
-                    if inn.get("billing_code_type") not in WANTED_CODE_TYPES:
-                        continue
-                    for nr in inn.get("negotiated_rates", []):
-                        for pg in nr.get("provider_groups", []):
-                            npis = pg.get("npi") or []
-                            tin = pg.get("tin") or {}
-                            for price in nr.get("negotiated_prices", []):
-                                yield {
-                                    "plan_name": scalars.get("plan_name"),
-                                    "plan_id": scalars.get("plan_id"),
-                                    "plan_market_type": scalars.get("plan_market_type"),
-                                    "reporting_entity_name": scalars.get("reporting_entity_name"),
-                                    "last_updated_on": scalars.get("last_updated_on"),
-                                    "billing_code_type": inn.get("billing_code_type"),
-                                    "billing_code": inn.get("billing_code"),
-                                    "service_name": inn.get("name"),
-                                    "service_description": inn.get("description"),
-                                    "negotiation_arrangement": inn.get("negotiation_arrangement"),
-                                    "tin_type": tin.get("type"),
-                                    "tin_value": tin.get("value"),
-                                    "npi_count": len(npis),
-                                    "npi_sample": npis[0] if npis else None,
-                                    "negotiated_type": price.get("negotiated_type"),
-                                    "negotiated_rate": price.get("negotiated_rate"),
-                                    "billing_class": price.get("billing_class"),
-                                    "expiration_date": price.get("expiration_date"),
-                                    "service_codes": ",".join(price.get("service_code") or []),
-                                    "modifiers": ",".join(price.get("billing_code_modifier") or []),
-                                }
+        # Extract scalar values from top level
+        for prefix, evt, val in parser:
+            if prefix in ("reporting_entity_name", "plan_name", "plan_id", "plan_market_type", "last_updated_on"):
+                scalars[prefix] = val
+            if prefix == "in_network" and evt == "start_array":
+                break
+
+        # Stream through in_network items
+        for inn in ijson.items(parser, "in_network.item", multiple_values=False):
+            if inn.get("billing_code_type") not in WANTED_CODE_TYPES:
+                continue
+            for nr in inn.get("negotiated_rates", []):
+                for pg in nr.get("provider_groups", []):
+                    npis = pg.get("npi") or []
+                    tin = pg.get("tin") or {}
+                    for price in nr.get("negotiated_prices", []):
+                        yield {
+                            "plan_name": scalars.get("plan_name"),
+                            "plan_id": scalars.get("plan_id"),
+                            "plan_market_type": scalars.get("plan_market_type"),
+                            "reporting_entity_name": scalars.get("reporting_entity_name"),
+                            "last_updated_on": scalars.get("last_updated_on"),
+                            "billing_code_type": inn.get("billing_code_type"),
+                            "billing_code": inn.get("billing_code"),
+                            "service_name": inn.get("name"),
+                            "service_description": inn.get("description"),
+                            "negotiation_arrangement": inn.get("negotiation_arrangement"),
+                            "tin_type": tin.get("type"),
+                            "tin_value": tin.get("value"),
+                            "npi_count": len(npis),
+                            "npi_sample": npis[0] if npis else None,
+                            "negotiated_type": price.get("negotiated_type"),
+                            "negotiated_rate": price.get("negotiated_rate"),
+                            "billing_class": price.get("billing_class"),
+                            "expiration_date": price.get("expiration_date"),
+                            "service_codes": ",".join(price.get("service_code") or []),
+                            "modifiers": ",".join(price.get("billing_code_modifier") or []),
+                        }
     finally:
         f.close()
 
