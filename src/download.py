@@ -111,13 +111,14 @@ def get_sizes(manifest_csv, out_csv="files/index_file/manifest_sized.csv"):
     print(f"Total size of all files: {total_gb:.1f} GB (compressed)")
 
 
-def download_one(url, out_dir="files/network_files", max_size_gb=2):
+def download_one(url, out_dir="files/network_files", max_size_gb=0.5, max_unzip_size_gb=1):
     """Download a single file, unzip it, and return the unzipped path.
 
     Args:
         url: File URL to download
         out_dir: Output directory
-        max_size_gb: Maximum file size in GB (default: 2)
+        max_size_gb: Maximum compressed file size in GB (default: 0.5)
+        max_unzip_size_gb: Maximum uncompressed file size in GB (default: 1)
     """
     pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
     name = url.rsplit("/", 1)[-1].split("?")[0]
@@ -125,6 +126,7 @@ def download_one(url, out_dir="files/network_files", max_size_gb=2):
     json_path = gz_path.with_suffix("")  # Remove .gz to get .json
 
     max_size_bytes = max_size_gb * 1024**3
+    max_unzip_bytes = max_unzip_size_gb * 1024**3
 
     # If already unzipped, skip
     if json_path.exists() and json_path.stat().st_size > 0:
@@ -139,8 +141,8 @@ def download_one(url, out_dir="files/network_files", max_size_gb=2):
         file_size = int(head_resp.headers.get("Content-Length", 0))
 
         if file_size > max_size_bytes:
-            size_gb = file_size / (1024**3)
-            return None, f"skipped (file too large: {size_gb:.1f} GB > {max_size_gb} GB limit)"
+            size_mb = file_size / (1024**2)
+            return None, f"skipped (compressed file too large: {size_mb:.1f} MB > {max_size_gb*1024:.0f} MB limit)"
 
         # Download with browser headers (server blocks requests without User-Agent)
         with requests.get(url, stream=True, timeout=120, headers=headers) as r:
@@ -157,14 +159,23 @@ def download_one(url, out_dir="files/network_files", max_size_gb=2):
                 with open(json_path, "wb") as f_out:
                     f_out.write(f_in.read())
             gz_path.unlink()
-            return json_path, "ok (downloaded and unzipped)"
         except (gzip.BadGzipFile, OSError):
             # Not actually gzipped - treat as plain JSON
             gz_path.rename(json_path)
-            return json_path, "ok (downloaded as plain JSON)"
+
+        # Check uncompressed file size
+        unzip_size = json_path.stat().st_size
+        if unzip_size > max_unzip_bytes:
+            size_gb = unzip_size / (1024**3)
+            json_path.unlink()
+            return None, f"skipped (uncompressed file too large: {size_gb:.1f} GB > {max_unzip_size_gb} GB limit)"
+
+        return json_path, "ok (downloaded)"
     except Exception as e:
         if gz_path.exists():
             gz_path.unlink()
+        if json_path.exists():
+            json_path.unlink()
         return None, f"error: {e}"
 
 
