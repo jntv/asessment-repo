@@ -20,10 +20,6 @@
         },
         {
           "description": "in-network files",
-          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company_Insurer_Behavior-Health_P3_in-network-rates.json.gz"
-        },
-        {
-          "description": "in-network files",
           "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company_Insurer_POS-00_S2_in-network-rates.json.gz"
         },
         {
