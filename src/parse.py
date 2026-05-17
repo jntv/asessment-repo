@@ -15,7 +15,8 @@ def get_memory_mb():
     """Get current memory usage in MB"""
     return psutil.Process().memory_info().rss / 1024 / 1024
 
-WANTED_CODE_TYPES = {"CPT", "HCPCS", "MS-DRG", "RC"}  # RC = Revenue Code
+# Parse ALL code types - don't filter, let Snowflake handle filtering if needed
+# Removed: WANTED_CODE_TYPES = {"CPT", "HCPCS", "MS-DRG", "RC"}
 
 if STORAGE_MODE == "S3":
     try:
@@ -62,8 +63,8 @@ def flatten(file_path):
 
         # Stream through in_network items
         for inn in ijson.items(parser, "in_network.item", multiple_values=False):
-            if inn.get("billing_code_type") not in WANTED_CODE_TYPES:
-                continue
+            # Process ALL code types (CPT, HCPCS, MS-DRG, RC, CDT, NDC, etc.)
+            # No filtering - get complete dataset
             for nr in inn.get("negotiated_rates", []):
                 for pg in nr.get("provider_groups", []):
                     npis = pg.get("npi") or []
@@ -168,7 +169,7 @@ def file_to_parquet(in_path, out_dir="data/parquet", batch=1000):
 
     # Check if any rows were actually parsed
     if row_count == 0:
-        logger.warning(f"No rows parsed from {Path(in_path).name} - all rows filtered by code type or file is empty")
+        logger.warning(f"No rows parsed from {Path(in_path).name} - file may be empty or has no in_network items")
         return None, "error: 0 rows parsed, no file created"
 
     if STORAGE_MODE == "S3":
