@@ -30,7 +30,23 @@ else:
 def flatten(file_path):
     """Stream-parse JSON file using ijson (memory-efficient)."""
     file_path_str = str(file_path)
-    f = gzip.open(file_path, "rb") if file_path_str.endswith(".gz") else open(file_path, "rb")
+
+    # Try to open as gzip first if it has .gz extension, fall back to plain JSON
+    f = None
+    if file_path_str.endswith(".gz"):
+        try:
+            f = gzip.open(file_path, "rb")
+            # Test that it's actually gzipped by reading a bit
+            f.read(1)
+            f.seek(0)
+        except (OSError, gzip.BadGzipFile):
+            # Not actually gzipped, try plain JSON
+            logger.warning(f"File {Path(file_path).name} has .gz extension but is not gzipped, treating as plain JSON")
+            if f:
+                f.close()
+            f = open(file_path, "rb")
+    else:
+        f = open(file_path, "rb")
 
     try:
         # Use ijson for both .gz and .json files (streaming, not loading into memory)
@@ -72,8 +88,8 @@ def flatten(file_path):
                             "negotiated_rate": price.get("negotiated_rate"),
                             "billing_class": price.get("billing_class"),
                             "expiration_date": price.get("expiration_date"),
-                            "service_codes": ",".join(price.get("service_code") or []),
-                            "modifiers": ",".join(price.get("billing_code_modifier") or []),
+                            "service_codes": ",".join(str(x) for x in (price.get("service_code") or []) if x is not None),
+                            "modifiers": ",".join(str(x) for x in (price.get("billing_code_modifier") or []) if x is not None),
                         }
     finally:
         f.close()
