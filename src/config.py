@@ -12,6 +12,7 @@ AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 AWS_REGION = os.environ.get("AWS_REGION", "ap-southeast-2")
 S3_BUCKET = os.environ.get("S3_BUCKET")
 S3_PREFIX = os.environ.get("S3_PREFIX", "parquet/")
+SF_S3_ROLE = os.environ.get("SF_S3_ROLE")
 
 def validate_aws_config():
     """Validate AWS S3 credentials are configured."""

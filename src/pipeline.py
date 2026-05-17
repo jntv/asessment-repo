@@ -163,27 +163,56 @@ def main():
     
     if pending > 0:
         print(f"\nStep 3: Processing {pending} pending file(s)...\n")
-        count = 0
+
+        # Group all URLs by their value to deduplicate
+        unique_urls = {}
         for url_item in all_urls:
-            if url_item['status'] != 'pending':
-                continue
-            count += 1
             url = url_item['url']
+            if url not in unique_urls:
+                unique_urls[url] = []
+            unique_urls[url].append(url_item)
+
+        # Count unique URLs that still need processing
+        pending_unique = sum(1 for url_items in unique_urls.values()
+                            if any(item['status'] == 'pending' for item in url_items))
+        print(f"  {pending} total rows, but only {pending_unique} unique URLs to download\n")
+
+        count = 0
+        for url, url_items in unique_urls.items():
+            # Skip if all rows with this URL are already done
+            pending_items = [item for item in url_items if item['status'] == 'pending']
+            if not pending_items:
+                continue
+
+            count += 1
+            # Use first item's metadata for processing
+            url_item = pending_items[0]
             plan_name = url_item['plan_name']
             plan_id = url_item['plan_id']
             reporting_entity = url_item['reporting_entity']
             filename = urlparse(url).path.split('/')[-1].split('?')[0]
+
+            plans_using_file = len(url_items)
             print(f"[{count}] {filename}")
-            print(f"    Plan: {plan_name} ({plan_id})")
+            print(f"    Used by {plans_using_file} plan(s) | First: {plan_name} ({plan_id})")
+
             success, parquet_path, error_msg = process_file(url, plan_name, plan_id, reporting_entity)
+
+            # Mark ALL rows with this URL with the same status
+            timestamp = datetime.now().isoformat()
+            for item in url_items:
+                if success:
+                    item['status'] = 'parsed'
+                    item['parsed_at'] = timestamp
+                else:
+                    item['status'] = 'failed'
+                    item['error_message'] = error_msg
+
             if success:
-                url_item['status'] = 'parsed'
-                url_item['parsed_at'] = datetime.now().isoformat()
-                print("  SUCCESS\n")
+                print(f"  SUCCESS (applies to {plans_using_file} plans)\n")
             else:
-                url_item['status'] = 'failed'
-                url_item['error_message'] = error_msg
                 print(f"  FAILED: {error_msg}\n")
+
             save_progress(all_urls)
     
     parsed_count = sum(1 for u in all_urls if u['status'] == 'parsed')
