@@ -171,34 +171,31 @@ def download_one(url, out_dir="files/network_files", max_size_gb=0.5, max_unzip_
         # Try to unzip, but handle plain JSON files (some servers return plain JSON despite .gz extension)
         try:
             logger.info(f"[DECOMPRESS] Starting gzip decompression...")
-            # Hard limit: stop if decompressed file exceeds 2GB (safety check)
-            max_decompress_bytes = 2 * 1024**3  # 2GB safety limit
+            # Hard limit: stop if decompressed file exceeds 1GB (safety check)
+            max_decompress_bytes = 1 * 1024**3  # 1GB safety limit
 
             with gzip.open(gz_path, "rb") as f_in:
                 with open(json_path, "wb") as f_out:
                     chunk_size = 8 * 1024 * 1024  # 8MB chunks to stream without loading entire file
                     bytes_written = 0
                     while True:
-                        logger.info(f"[DECOMPRESS] Reading chunk...")
                         chunk = f_in.read(chunk_size)
                         if not chunk:
                             break
                         bytes_written += len(chunk)
 
-                        # Safety check: stop if exceeds 2GB
+                        # Safety check: stop if exceeds 1GB
                         if bytes_written > max_decompress_bytes:
-                            logger.warning(f"[DECOMPRESS] STOPPED: File exceeds 2GB limit ({bytes_written / (1024**3):.1f} GB)")
+                            logger.warning(f"[DECOMPRESS] STOPPED: Exceeds 1GB limit ({bytes_written / (1024**3):.2f} GB)")
                             f_out.close()
                             json_path.unlink()
                             gz_path.unlink()
-                            return None, f"skipped (decompressed file too large: {bytes_written / (1024**3):.1f} GB > 2 GB limit)"
+                            return None, f"skipped (decompressed file too large: {bytes_written / (1024**3):.2f} GB > 1 GB limit)"
 
                         f_out.write(chunk)
-                        logger.info(f"[DECOMPRESS] Written {bytes_written / (1024**2):.1f} MB")
 
-                    logger.info(f"[DECOMPRESS] Wrote {bytes_written / (1024**2):.1f} MB total to {json_path.name}")
+                    logger.info(f"[DECOMPRESS] Success: {bytes_written / (1024**2):.1f} MB")
             gz_path.unlink()
-            logger.info(f"[DECOMPRESS] Success, deleted gz file")
         except (gzip.BadGzipFile, OSError) as e:
             # Not actually gzipped - treat as plain JSON
             logger.warning(f"[DECOMPRESS] Not gzipped ({e}), treating as plain JSON")
