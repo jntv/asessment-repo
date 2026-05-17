@@ -151,15 +151,17 @@ def download_one(url, out_dir="files/network_files", max_size_gb=2):
                     f.write(chunk)
             tmp.rename(gz_path)
 
-        # Unzip
-        with gzip.open(gz_path, "rb") as f_in:
-            with open(json_path, "wb") as f_out:
-                f_out.write(f_in.read())
-
-        # Delete the .gz file
-        gz_path.unlink()
-
-        return json_path, "ok (downloaded and unzipped)"
+        # Try to unzip, but handle plain JSON files (some servers return plain JSON despite .gz extension)
+        try:
+            with gzip.open(gz_path, "rb") as f_in:
+                with open(json_path, "wb") as f_out:
+                    f_out.write(f_in.read())
+            gz_path.unlink()
+            return json_path, "ok (downloaded and unzipped)"
+        except (gzip.BadGzipFile, OSError):
+            # Not actually gzipped - treat as plain JSON
+            gz_path.rename(json_path)
+            return json_path, "ok (downloaded as plain JSON)"
     except Exception as e:
         if gz_path.exists():
             gz_path.unlink()
