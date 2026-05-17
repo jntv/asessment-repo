@@ -172,12 +172,18 @@ def download_one(url, out_dir="files/network_files", max_size_gb=0.5, max_unzip_
         try:
             logger.info(f"[DECOMPRESS] Starting gzip decompression...")
             with gzip.open(gz_path, "rb") as f_in:
-                logger.info(f"[DECOMPRESS] Reading gzip content...")
-                content = f_in.read()
-                logger.info(f"[DECOMPRESS] Read {len(content) / (1024**2):.1f} MB from gzip")
                 with open(json_path, "wb") as f_out:
-                    f_out.write(content)
-                logger.info(f"[DECOMPRESS] Wrote to {json_path.name}")
+                    chunk_size = 8 * 1024 * 1024  # 8MB chunks to stream without loading entire file
+                    bytes_written = 0
+                    while True:
+                        logger.info(f"[DECOMPRESS] Reading chunk...")
+                        chunk = f_in.read(chunk_size)
+                        if not chunk:
+                            break
+                        f_out.write(chunk)
+                        bytes_written += len(chunk)
+                        logger.info(f"[DECOMPRESS] Written {bytes_written / (1024**2):.1f} MB")
+                    logger.info(f"[DECOMPRESS] Wrote {bytes_written / (1024**2):.1f} MB total to {json_path.name}")
             gz_path.unlink()
             logger.info(f"[DECOMPRESS] Success, deleted gz file")
         except (gzip.BadGzipFile, OSError) as e:
