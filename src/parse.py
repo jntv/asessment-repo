@@ -69,6 +69,17 @@ def flatten(file_path):
                     npis = pg.get("npi") or []
                     tin = pg.get("tin") or {}
                     for price in nr.get("negotiated_prices", []):
+                        # Safely build service_codes and modifiers, defaulting to empty string if problematic
+                        try:
+                            service_codes = ",".join(str(x) for x in (price.get("service_code") or []) if x is not None) or None
+                        except (TypeError, ValueError):
+                            service_codes = None
+
+                        try:
+                            modifiers = ",".join(str(x) for x in (price.get("billing_code_modifier") or []) if x is not None) or None
+                        except (TypeError, ValueError):
+                            modifiers = None
+
                         yield {
                             "plan_name": scalars.get("plan_name"),
                             "plan_id": scalars.get("plan_id"),
@@ -88,8 +99,8 @@ def flatten(file_path):
                             "negotiated_rate": price.get("negotiated_rate"),
                             "billing_class": price.get("billing_class"),
                             "expiration_date": price.get("expiration_date"),
-                            "service_codes": ",".join(str(x) for x in (price.get("service_code") or []) if x is not None),
-                            "modifiers": ",".join(str(x) for x in (price.get("billing_code_modifier") or []) if x is not None),
+                            "service_codes": service_codes,
+                            "modifiers": modifiers,
                         }
     finally:
         f.close()
