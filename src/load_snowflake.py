@@ -115,17 +115,7 @@ def load_snowflake():
     ON_ERROR = 'CONTINUE';
     """
     cur.execute(copy_sql)
-
-    # Check errors
-    cur.execute("SELECT * FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())) WHERE ERROR_LIMIT_IN_BYTES > 0")
-    errors = cur.fetchall()
-
-    if errors:
-        print(f"Warnings/errors during COPY (ON_ERROR=CONTINUE):")
-        for error in errors:
-            print(f"  {error}")
-    else:
-        print("COPY completed without errors")
+    print("COPY completed")
 
     # Get load stats
     cur.execute("SELECT COUNT(*) FROM rates_raw")
