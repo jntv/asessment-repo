@@ -4,7 +4,7 @@ Orchestrates: Extract -> Download -> Parse -> Load
 Tracks progress in CSV, resumes from last successful file
 """
 
-import os, sys, json, csv
+import os, sys, json, csv, logging, psutil
 from pathlib import Path
 from datetime import datetime
 from urllib.parse import urlparse
@@ -13,6 +13,21 @@ from config import STORAGE_MODE, validate_aws_config
 from download import download_one
 from parse import file_to_parquet
 from load_snowflake import load_snowflake
+
+# Setup logging
+log_dir = Path("logs")
+log_dir.mkdir(exist_ok=True)
+log_file = log_dir / f"pipeline_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(log_file),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
 
 INDEX_DIR = Path("files/index_file")
 PROGRESS_FILE = INDEX_DIR / "progress.csv"
@@ -61,29 +76,60 @@ def save_progress(all_urls):
         w.writeheader()
         w.writerows(all_urls)
 
+def get_memory_usage():
+    """Get current memory usage in MB"""
+    process = psutil.Process()
+    return process.memory_info().rss / 1024 / 1024
+
 def process_file(url, plan_name, plan_id, reporting_entity):
     json_path = None
     try:
+        mem_before = get_memory_usage()
+        logger.info(f"Starting download. Memory: {mem_before:.1f}MB")
+
         print("  Downloading...")
         json_path, status = download_one(url)
         if not json_path:
+            logger.warning(f"Download failed: {status}")
             return False, None, f"Download failed: {status}"
-        print(f"  Downloaded: {Path(json_path).name}")
+
+        json_size_mb = Path(json_path).stat().st_size / 1024 / 1024
+        mem_after_dl = get_memory_usage()
+        logger.info(f"Downloaded: {Path(json_path).name} ({json_size_mb:.1f}MB). Memory: {mem_after_dl:.1f}MB")
+        print(f"  Downloaded: {Path(json_path).name} ({json_size_mb:.1f}MB)")
+
+        logger.info(f"Starting parse. Memory: {mem_after_dl:.1f}MB")
         print("  Parsing to parquet...")
         parquet_path, parse_status = file_to_parquet(json_path)
+
+        mem_after_parse = get_memory_usage()
+        logger.info(f"Parse completed. Memory: {mem_after_parse:.1f}MB")
+
         if not parquet_path:
+            logger.error(f"Parse failed: {parse_status}")
             return False, None, f"Parse failed: {parse_status}"
-        print(f"  Parsed: {Path(parquet_path).name}")
+
+        parquet_size_mb = Path(parquet_path).stat().st_size / 1024 / 1024
+        logger.info(f"Parsed: {Path(parquet_path).name} ({parquet_size_mb:.1f}MB)")
+        print(f"  Parsed: {Path(parquet_path).name} ({parquet_size_mb:.1f}MB)")
 
         # Clean up: Delete JSON file after successful parsing
         try:
             Path(json_path).unlink()
+            logger.info(f"Cleaned up: {Path(json_path).name}")
             print(f"  Cleaned up: {Path(json_path).name}")
         except Exception as cleanup_error:
+            logger.warning(f"Could not delete {Path(json_path).name}: {cleanup_error}")
             print(f"  Warning: Could not delete {Path(json_path).name}: {cleanup_error}")
+
+        mem_final = get_memory_usage()
+        logger.info(f"File complete. Memory: {mem_final:.1f}MB (delta: {mem_final - mem_before:.1f}MB)")
 
         return True, parquet_path, None
     except Exception as e:
+        logger.exception(f"Exception in process_file: {e}")
+        logger.info(f"Current memory: {get_memory_usage():.1f}MB")
+
         # Clean up on error too
         if json_path and Path(json_path).exists():
             try:
