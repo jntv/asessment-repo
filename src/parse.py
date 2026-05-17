@@ -166,6 +166,11 @@ def file_to_parquet(in_path, out_dir="data/parquet", batch=1000):
             out_path.unlink()
         return None, f"error: {e}"
 
+    # Check if any rows were actually parsed
+    if row_count == 0:
+        logger.warning(f"No rows parsed from {Path(in_path).name} - all rows filtered by code type or file is empty")
+        return None, "error: 0 rows parsed, no file created"
+
     if STORAGE_MODE == "S3":
         try:
             s3_key = f"{S3_PREFIX}{out_path.name}"
