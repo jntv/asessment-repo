@@ -120,6 +120,9 @@ def download_one(url, out_dir="files/network_files", max_size_gb=0.5, max_unzip_
         max_size_gb: Maximum compressed file size in GB (default: 0.5)
         max_unzip_size_gb: Maximum uncompressed file size in GB (default: 1)
     """
+    import logging
+    logger = logging.getLogger(__name__)
+
     pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
     name = url.rsplit("/", 1)[-1].split("?")[0]
     gz_path = pathlib.Path(out_dir) / name
@@ -130,48 +133,72 @@ def download_one(url, out_dir="files/network_files", max_size_gb=0.5, max_unzip_
 
     # If already unzipped, skip
     if json_path.exists() and json_path.stat().st_size > 0:
+        logger.info(f"[DOWNLOAD] Skipped (already exists): {name}")
         return json_path, "skipped (already unzipped)"
 
     try:
+        logger.info(f"[DOWNLOAD] Starting: {name}")
+
         # Check file size before downloading
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }
+        logger.info(f"[DOWNLOAD] Checking size...")
         head_resp = requests.head(url, allow_redirects=True, timeout=20, headers=headers)
         file_size = int(head_resp.headers.get("Content-Length", 0))
+        file_size_mb = file_size / (1024**2)
+        logger.info(f"[DOWNLOAD] Remote size: {file_size_mb:.1f} MB")
 
         if file_size > max_size_bytes:
-            size_mb = file_size / (1024**2)
-            return None, f"skipped (compressed file too large: {size_mb:.1f} MB > {max_size_gb*1024:.0f} MB limit)"
+            logger.warning(f"[DOWNLOAD] Skipped (too large): {file_size_mb:.1f} MB > {max_size_gb*1024:.0f} MB limit")
+            return None, f"skipped (compressed file too large: {file_size_mb:.1f} MB > {max_size_gb*1024:.0f} MB limit)"
 
         # Download with browser headers (server blocks requests without User-Agent)
+        logger.info(f"[DOWNLOAD] Downloading {file_size_mb:.1f} MB...")
         with requests.get(url, stream=True, timeout=120, headers=headers) as r:
             r.raise_for_status()
             tmp = gz_path.with_suffix(gz_path.suffix + ".part")
+            downloaded = 0
             with open(tmp, "wb") as f:
                 for chunk in r.iter_content(8 * 1024 * 1024):
                     f.write(chunk)
+                    downloaded += len(chunk)
+                    logger.info(f"[DOWNLOAD] Progress: {downloaded / (1024**2):.1f} MB / {file_size_mb:.1f} MB")
             tmp.rename(gz_path)
+
+        logger.info(f"[DOWNLOAD] Download complete, decompressing...")
 
         # Try to unzip, but handle plain JSON files (some servers return plain JSON despite .gz extension)
         try:
+            logger.info(f"[DECOMPRESS] Starting gzip decompression...")
             with gzip.open(gz_path, "rb") as f_in:
+                logger.info(f"[DECOMPRESS] Reading gzip content...")
+                content = f_in.read()
+                logger.info(f"[DECOMPRESS] Read {len(content) / (1024**2):.1f} MB from gzip")
                 with open(json_path, "wb") as f_out:
-                    f_out.write(f_in.read())
+                    f_out.write(content)
+                logger.info(f"[DECOMPRESS] Wrote to {json_path.name}")
             gz_path.unlink()
-        except (gzip.BadGzipFile, OSError):
+            logger.info(f"[DECOMPRESS] Success, deleted gz file")
+        except (gzip.BadGzipFile, OSError) as e:
             # Not actually gzipped - treat as plain JSON
+            logger.warning(f"[DECOMPRESS] Not gzipped ({e}), treating as plain JSON")
             gz_path.rename(json_path)
 
         # Check uncompressed file size
         unzip_size = json_path.stat().st_size
-        if unzip_size > max_unzip_bytes:
-            size_gb = unzip_size / (1024**3)
-            json_path.unlink()
-            return None, f"skipped (uncompressed file too large: {size_gb:.1f} GB > {max_unzip_size_gb} GB limit)"
+        unzip_size_gb = unzip_size / (1024**3)
+        logger.info(f"[DOWNLOAD] Uncompressed size: {unzip_size_gb:.3f} GB")
 
+        if unzip_size > max_unzip_bytes:
+            logger.warning(f"[DOWNLOAD] Skipped (uncompressed too large): {unzip_size_gb:.1f} GB > {max_unzip_size_gb} GB")
+            json_path.unlink()
+            return None, f"skipped (uncompressed file too large: {unzip_size_gb:.1f} GB > {max_unzip_size_gb} GB limit)"
+
+        logger.info(f"[DOWNLOAD] Success: {name}")
         return json_path, "ok (downloaded)"
     except Exception as e:
+        logger.exception(f"[DOWNLOAD] Error: {e}")
         if gz_path.exists():
             gz_path.unlink()
         if json_path.exists():

@@ -113,7 +113,10 @@ def file_to_parquet(in_path, out_dir="data/parquet", batch=1000):
     out_path = out_dir / (Path(in_path).stem + ".parquet")
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    logger.info(f"[PARSE] Starting parse: {Path(in_path).name}")
+
     if out_path.exists():
+        logger.info(f"[PARSE] Skipped (already exists): {out_path.name}")
         return out_path, "skipped"
 
     writer = None
@@ -121,45 +124,58 @@ def file_to_parquet(in_path, out_dir="data/parquet", batch=1000):
     row_count = 0
 
     try:
+        logger.info(f"[PARSE] Flattening JSON stream...")
         for row in flatten(in_path):
             buf.append(row)
             row_count += 1
 
+            if row_count % (batch * 10) == 0:
+                logger.info(f"[PARSE] Progress: {row_count} rows")
+
             if len(buf) >= batch:
+                logger.info(f"[PARSE] Writing batch: {len(buf)} rows")
                 tbl = pa.Table.from_pylist(buf)
                 if writer is None:
+                    logger.info(f"[PARSE] Creating parquet writer with schema")
                     writer = pq.ParquetWriter(out_path, tbl.schema, compression="zstd")
                 writer.write_table(tbl)
                 buf = []
 
         if buf:
+            logger.info(f"[PARSE] Writing final batch: {len(buf)} rows")
             tbl = pa.Table.from_pylist(buf)
             if writer is None:
+                logger.info(f"[PARSE] Creating parquet writer for final batch")
                 writer = pq.ParquetWriter(out_path, tbl.schema, compression="zstd")
             writer.write_table(tbl)
 
         if writer:
+            logger.info(f"[PARSE] Closing parquet writer...")
             writer.close()
 
-        logger.info(f"Parsed {row_count} rows")
+        logger.info(f"[PARSE] Complete: {row_count} rows parsed")
     except Exception as e:
-        logger.exception(f"Parse error at row {row_count}: {e}")
+        logger.exception(f"[PARSE] Error at row {row_count}: {e}")
         if out_path.exists():
             out_path.unlink()
         return None, f"error: {e}"
 
     # Check if any rows were actually parsed
     if row_count == 0:
-        logger.warning(f"No rows parsed from {Path(in_path).name} - file may be empty or has no in_network items")
+        logger.warning(f"[PARSE] No rows parsed from {Path(in_path).name}")
         return None, "error: 0 rows parsed, no file created"
 
     if STORAGE_MODE == "S3":
         try:
+            logger.info(f"[PARSE] Uploading to S3...")
             s3_key = f"{S3_PREFIX}{out_path.name}"
             s3_uri = upload_to_s3(str(out_path), s3_key)
+            logger.info(f"[PARSE] S3 upload complete: {s3_uri}")
             out_path.unlink()
+            logger.info(f"[PARSE] Local file deleted")
             return s3_uri, f"ok ({row_count} rows, uploaded to S3)"
         except Exception as s3_error:
+            logger.exception(f"[PARSE] S3 upload error: {s3_error}")
             return None, f"error uploading to S3: {s3_error}"
     else:
         return str(out_path), f"ok ({row_count} rows, saved to {out_path})"
