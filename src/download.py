@@ -158,12 +158,9 @@ def download_one(url, out_dir="files/network_files", max_size_gb=0.5, max_unzip_
         with requests.get(url, stream=True, timeout=120, headers=headers) as r:
             r.raise_for_status()
             tmp = gz_path.with_suffix(gz_path.suffix + ".part")
-            downloaded = 0
             with open(tmp, "wb") as f:
                 for chunk in r.iter_content(8 * 1024 * 1024):
                     f.write(chunk)
-                    downloaded += len(chunk)
-                    logger.info(f"[DOWNLOAD] Progress: {downloaded / (1024**2):.1f} MB / {file_size_mb:.1f} MB")
             tmp.rename(gz_path)
 
         logger.info(f"[DOWNLOAD] Download complete, decompressing...")
