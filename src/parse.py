@@ -108,7 +108,7 @@ def flatten(file_path):
         f.close()
 
 
-def file_to_parquet(in_path, out_dir="data/parquet", batch=200000):
+def file_to_parquet(in_path, out_dir="data/parquet", batch=50000):
     """Convert JSON to parquet, streaming to control memory."""
     out_dir = Path(out_dir)
     out_path = out_dir / (Path(in_path).stem + ".parquet")
