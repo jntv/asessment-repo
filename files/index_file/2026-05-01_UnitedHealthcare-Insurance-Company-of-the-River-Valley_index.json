@@ -1,0 +1,393 @@
+{
+  "reporting_entity_name": "UnitedHealthcare-Insurance-Company-of-the-River-Valley",
+  "reporting_entity_type": "Insurer",
+  "reporting_structure": [
+    {
+      "reporting_plans": [
+        {
+          "plan_name": "HERITAGE-POS-RV-CHOICE",
+          "plan_id": "20-1902768",
+          "plan_id_type": "EIN",
+          "plan_market_type": "group",
+          "plan_sponser_name": "GrowthX LLC",
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        }
+      ],
+      "in_network_files": [
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_PPO---NDC_PPO-NDC_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_PS1-77_EL_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network CMC Transplant shared files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_CMC_Transplant_MRRF_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network CMC Cancer shared files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_CMC_CRS_MRRF_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_Behavior-Health_P3_in-network-rates.json.gz"
+        }
+      ],
+      "allowed_amount_file": {
+        "description": "allowed amount file",
+        "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_HERITAGE-POS-RV-CHOICE_allowed-amounts.json.gz"
+      }
+    },
+    {
+      "reporting_plans": [
+        {
+          "plan_name": "Heritage-Select-Advantage",
+          "plan_id": "10958TN004",
+          "plan_id_type": "HIOS",
+          "plan_market_type": "group",
+          "plan_sponser_name": null,
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        },
+        {
+          "plan_name": "Heritage-Select-Advantage",
+          "plan_id": "10958TN007",
+          "plan_id_type": "HIOS",
+          "plan_market_type": "group",
+          "plan_sponser_name": null,
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        }
+      ],
+      "in_network_files": [
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_PS1-79_ER_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_PPO-NDC_PPO-NDC_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network CMC Transplant shared files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_CMC_Transplant_MRRF_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_UHC---Embedded-Dental_UHC-Dental_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_UHC---Embedded-Vision_UHC-Vision_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network CMC Cancer shared files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_CMC_CRS_MRRF_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_Behavior-Health_P3_in-network-rates.json.gz"
+        }
+      ]
+    },
+    {
+      "reporting_plans": [
+        {
+          "plan_name": "UHC-POS-Non-Gated-INNOON",
+          "plan_id": "20-1902768",
+          "plan_id_type": "EIN",
+          "plan_market_type": "group",
+          "plan_sponser_name": "GrowthX LLC",
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        }
+      ],
+      "in_network_files": [],
+      "allowed_amount_file": {
+        "description": "allowed amount file",
+        "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_UHC-POS-Non-Gated-INNOON_allowed-amounts.json.gz"
+      }
+    },
+    {
+      "reporting_plans": [
+        {
+          "plan_name": "Heritage-Plus",
+          "plan_id": "22732AR001",
+          "plan_id_type": "HIOS",
+          "plan_market_type": "group",
+          "plan_sponser_name": null,
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        },
+        {
+          "plan_name": "Heritage-Plus",
+          "plan_id": "64146SC001",
+          "plan_id_type": "HIOS",
+          "plan_market_type": "group",
+          "plan_sponser_name": null,
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        },
+        {
+          "plan_name": "Heritage-Plus",
+          "plan_id": "33232OH002",
+          "plan_id_type": "HIOS",
+          "plan_market_type": "group",
+          "plan_sponser_name": null,
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        },
+        {
+          "plan_name": "Heritage-Plus",
+          "plan_id": "22732AR003",
+          "plan_id_type": "HIOS",
+          "plan_market_type": "group",
+          "plan_sponser_name": null,
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        },
+        {
+          "plan_name": "Heritage-Plus",
+          "plan_id": "33232OH001",
+          "plan_id_type": "HIOS",
+          "plan_market_type": "group",
+          "plan_sponser_name": null,
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        },
+        {
+          "plan_name": "Heritage-Plus",
+          "plan_id": "34446IL004",
+          "plan_id_type": "HIOS",
+          "plan_market_type": "group",
+          "plan_sponser_name": null,
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        },
+        {
+          "plan_name": "Heritage-Plus",
+          "plan_id": "34446IL001",
+          "plan_id_type": "HIOS",
+          "plan_market_type": "group",
+          "plan_sponser_name": null,
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        },
+        {
+          "plan_name": "Heritage-Plus",
+          "plan_id": "10958TN007",
+          "plan_id_type": "HIOS",
+          "plan_market_type": "group",
+          "plan_sponser_name": null,
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        },
+        {
+          "plan_name": "Heritage-Plus",
+          "plan_id": "58658NC001",
+          "plan_id_type": "HIOS",
+          "plan_market_type": "group",
+          "plan_sponser_name": null,
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        },
+        {
+          "plan_name": "Heritage-Plus",
+          "plan_id": "20-1902768",
+          "plan_id_type": "EIN",
+          "plan_market_type": "group",
+          "plan_sponser_name": "GrowthX LLC",
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        },
+        {
+          "plan_name": "Heritage-Plus",
+          "plan_id": "53946LA003",
+          "plan_id_type": "HIOS",
+          "plan_market_type": "group",
+          "plan_sponser_name": null,
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        },
+        {
+          "plan_name": "Heritage-Plus",
+          "plan_id": "64146SC003",
+          "plan_id_type": "HIOS",
+          "plan_market_type": "group",
+          "plan_sponser_name": null,
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        },
+        {
+          "plan_name": "Heritage-Plus",
+          "plan_id": "10958TN001",
+          "plan_id_type": "HIOS",
+          "plan_market_type": "group",
+          "plan_sponser_name": null,
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        },
+        {
+          "plan_name": "Heritage-Plus",
+          "plan_id": "30552GA001",
+          "plan_id_type": "HIOS",
+          "plan_market_type": "group",
+          "plan_sponser_name": null,
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        }
+      ],
+      "in_network_files": [
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_PS1-77_EL_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_PPO-NDC_PPO-NDC_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network CMC Transplant shared files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_CMC_Transplant_MRRF_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_UHC---Embedded-Dental_UHC-Dental_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_UHC---Embedded-Vision_UHC-Vision_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network CMC Cancer shared files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_CMC_CRS_MRRF_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_Behavior-Health_P3_in-network-rates.json.gz"
+        }
+      ]
+    },
+    {
+      "reporting_plans": [
+        {
+          "plan_name": "Heritage-Select-Advantage",
+          "plan_id": "20-1902768",
+          "plan_id_type": "EIN",
+          "plan_market_type": "group",
+          "plan_sponser_name": "GrowthX LLC",
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        }
+      ],
+      "in_network_files": [
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_PS1-79_ER_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_PPO-NDC_PPO-NDC_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network CMC Transplant shared files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_CMC_Transplant_MRRF_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network CMC Cancer shared files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_CMC_CRS_MRRF_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_Behavior-Health_P3_in-network-rates.json.gz"
+        }
+      ]
+    },
+    {
+      "reporting_plans": [
+        {
+          "plan_name": "UHC-POS-Non-Gated-INN-OON",
+          "plan_id": "20-1902768",
+          "plan_id_type": "EIN",
+          "plan_market_type": "group",
+          "plan_sponser_name": "GrowthX LLC",
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        }
+      ],
+      "in_network_files": [
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_OHPH-ST_30_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_Choice-Plus-POS_8_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_Heritage-Select-Advantage-Choice-Tier-1_681_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_Heritage-POS_672_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_OHPH-Acupuncture-Massage-Naturopath_31_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_UHC---Embedded-Dental_UHC-Dental_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_UHC---Embedded-Vision_UHC-Vision_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_Optum-Health-Behavioral-Services--OHBS-_5_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_OHPH-Chiro_28_in-network-rates.json.gz"
+        }
+      ]
+    },
+    {
+      "reporting_plans": [
+        {
+          "plan_name": "UHC-EPO-Non-Gated-INN-Only",
+          "plan_id": "20-1902768",
+          "plan_id_type": "EIN",
+          "plan_market_type": "group",
+          "plan_sponser_name": "GrowthX LLC",
+          "issuer_name": "UnitedHealthcare Insurance Company of the River Valley"
+        }
+      ],
+      "in_network_files": [
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_OHPH-ST_30_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_Choice-Plus-POS_8_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_OHPH-Acupuncture-Massage-Naturopath_31_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_Heritage-EPO_669_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_UHC---Embedded-Dental_UHC-Dental_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_UHC---Embedded-Vision_UHC-Vision_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_Optum-Health-Behavioral-Services--OHBS-_5_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_Insurer_OHPH-Chiro_28_in-network-rates.json.gz"
+        }
+      ],
+      "allowed_amount_file": {
+        "description": "allowed amount file",
+        "location": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-05-01/2026-05-01_UnitedHealthcare-Insurance-Company-of-the-River-Valley_UHC-EPO-Non-Gated-INN-Only_allowed-amounts.json.gz"
+      }
+    }
+  ],
+  "last_updated_on": "2026-05-01",
+  "version": "2.0.0"
+}
