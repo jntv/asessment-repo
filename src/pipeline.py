@@ -62,6 +62,7 @@ def save_progress(all_urls):
         w.writerows(all_urls)
 
 def process_file(url, plan_name, plan_id, reporting_entity):
+    json_path = None
     try:
         print("  Downloading...")
         json_path, status = download_one(url)
@@ -73,8 +74,22 @@ def process_file(url, plan_name, plan_id, reporting_entity):
         if not parquet_path:
             return False, None, f"Parse failed: {parse_status}"
         print(f"  Parsed: {Path(parquet_path).name}")
+
+        # Clean up: Delete JSON file after successful parsing
+        try:
+            Path(json_path).unlink()
+            print(f"  Cleaned up: {Path(json_path).name}")
+        except Exception as cleanup_error:
+            print(f"  Warning: Could not delete {Path(json_path).name}: {cleanup_error}")
+
         return True, parquet_path, None
     except Exception as e:
+        # Clean up on error too
+        if json_path and Path(json_path).exists():
+            try:
+                Path(json_path).unlink()
+            except:
+                pass
         return False, None, str(e)
 
 def main():
