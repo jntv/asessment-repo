@@ -6,7 +6,7 @@ A data engineering project that downloads, parses, and analyzes healthcare prici
 
 This pipeline downloads healthcare pricing files from UHC, converts them into structured data, stores them in S3, and loads everything into Snowflake for analysis. It handles:
 
-- **Downloading** large, compressed files (100-400MB each)
+- **Downloading** large, compressed files (up to 1GB each)
 - **Parsing** deeply nested JSON without running out of memory
 - **Converting** to parquet format (efficient columnar storage)
 - **Resuming** if it crashes (tracks progress in CSV)
@@ -72,7 +72,7 @@ This is the 35x speedup: we only download what's truly unique
 For each unique URL:
     
 1. Check file size (HEAD request)
-   - If > 500MB compressed → skip (too risky)
+   - If > 1GB compressed → skip (too risky)
    
 2. Stream download in 8MB chunks
    - Store as temporary .part file
@@ -80,11 +80,11 @@ For each unique URL:
 3. Try to decompress:
    - Read gzip header
    - Stream decompress in 8MB chunks
-   - If file size exceeds 1GB → stop and delete (safety valve)
+   - If file size exceeds 3GB → stop and delete (safety valve)
    - If gzip fails → treat as plain JSON (some servers lie about compression)
    
 4. Verify uncompressed file size
-   - If > 1GB → delete and skip
+   - If > 3GB → delete and skip
    
 5. Output: Decompressed JSON file ready for parsing
    - Temporary location: files/network_files/*.json
@@ -206,8 +206,8 @@ Visualize:
 - Memory usage stays under 200MB even with 9GB+ files
 
 **Safety limits prevent disasters:**
-- 500MB compressed file size limit
-- 1GB decompressed file limit
+- 1GB compressed file size limit
+- 3GB decompressed file limit
 - ON_ERROR='CONTINUE' in Snowflake COPY
 - If something fails, we log it and move on, resuming later
 
@@ -229,9 +229,9 @@ This is the file you run. It orchestrates everything from start to finish.
 **`src/download.py`** — Downloads files safely (the careful downloader)
 Handles the network part. Files can be 300-400MB so we need to be smart.
 - Takes a URL and stream-downloads it in 8MB chunks (never loads the whole 400MB into RAM at once)
-- Checks the file size before downloading - if it's over 500MB compressed, we skip it (too risky)
+- Checks the file size before downloading - if it's over 1GB compressed, we skip it (too risky)
 - Tries to decompress with gzip. If it fails, treats the file as plain JSON (some servers claim .gz but aren't)
-- While decompressing, tracks bytes written. If it exceeds 1GB during decompression, stops and skips (safety valve for files that claim to be small but decompress huge)
+- While decompressing, tracks bytes written. If it exceeds 3GB during decompression, stops and skips (safety valve for files that claim to be small but decompress huge)
 - Returns the path to the decompressed JSON file for parsing
 - Cleans up the .gz file after decompression succeeds (only keeps the JSON)
 - If anything fails, cleans up both files and returns an error message
@@ -589,13 +589,13 @@ The files that made it: CMC_CRS_MRRF, CMC_ORTH_MRRF, CMC_Transplant_MRRF across 
 
 **Deduplication** — Same file referenced 48 times (once per plan). We download once, tag with all 48 plans. Reduces downloads from 624 to 118 (35x faster).
 
-**Chunk-based decompression** — Some files expand to 400MB. We decompress in 8MB chunks so RAM usage stays constant. When we hit 1GB during decompression, we stop and skip the file (safety valve).
+**Chunk-based decompression** — Some files expand to several GB. We decompress in 8MB chunks so RAM usage stays constant. When we hit 3GB during decompression, we stop and skip the file (safety valve).
 
 **Parquet format** — 30x smaller than raw JSON, faster to query, Snowflake understands it natively.
 
 **Progress tracking** — Simple CSV file, not a database. Easy to debug, human-readable, can manually edit if needed.
 
-**Size limits** — 500MB compressed, 1GB decompressed. Prevents disk exhaustion and processing nightmares.
+**Size limits** — 1GB compressed, 3GB decompressed. Prevents disk exhaustion and processing nightmares.
 
 ## Challenges We Hit (And How We Fixed Them)
 
@@ -609,7 +609,7 @@ The files that made it: CMC_CRS_MRRF, CMC_ORTH_MRRF, CMC_Transplant_MRRF across 
 
 3. **Incomplete decompression**
    - Problem: First attempt created 0-byte files mid-process
-   - Solution: Stream in chunks, if file exceeds 1GB during decompression, stop and skip
+   - Solution: Stream in chunks, if file exceeds 3GB during decompression, stop and skip
 
 4. **Same file processed multiple times**
    - Problem: 624 rows but only 118 unique URLs (same file listed 48+ times)
@@ -741,7 +741,7 @@ You can now demonstrate:
 **Talking points:**
 - "The key insight is deduplication - same file referenced by 48 plans, download once"
 - "We stream everything to avoid OOM: download, decompress, and parse all use 8MB chunks"
-- "Safety limits prevent disasters: 500MB download, 1GB decompression, ON_ERROR=CONTINUE in Snowflake"
+- "Safety limits prevent disasters: 1GB download, 3GB decompression, ON_ERROR=CONTINUE in Snowflake"
 - "Progress tracking makes it production-ready: if it crashes, just rerun and it resumes"
 - "S3 storage makes it cloud-native: parsing uploads directly, Snowflake reads from S3 external stage"
 

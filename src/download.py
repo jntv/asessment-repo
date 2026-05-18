@@ -111,7 +111,7 @@ def get_sizes(manifest_csv, out_csv="files/index_file/manifest_sized.csv"):
     print(f"Total size of all files: {total_gb:.1f} GB (compressed)")
 
 
-def download_one(url, out_dir="files/network_files", max_size_gb=0.5, max_unzip_size_gb=1):
+def download_one(url, out_dir="files/network_files", max_size_gb=1.0, max_unzip_size_gb=3.0):
     """Download file from URL and decompress it"""
     import logging
     logger = logging.getLogger(__name__)
@@ -160,7 +160,7 @@ def download_one(url, out_dir="files/network_files", max_size_gb=0.5, max_unzip_
 
         try:
             logger.info(f"[DECOMPRESS] Starting decompression...")
-            max_decompress_bytes = 1 * 1024**3
+            max_decompress_bytes = max_unzip_bytes
 
             with gzip.open(gz_path, "rb") as f_in:
                 with open(json_path, "wb") as f_out:
@@ -177,7 +177,7 @@ def download_one(url, out_dir="files/network_files", max_size_gb=0.5, max_unzip_
                             f_out.close()
                             json_path.unlink()
                             gz_path.unlink()
-                            return None, f"skipped (decompressed file too large: {bytes_written / (1024**3):.2f} GB > 1 GB limit)"
+                            return None, f"skipped (decompressed file too large: {bytes_written / (1024**3):.2f} GB > {max_unzip_size_gb} GB limit)"
 
                         f_out.write(chunk)
 
