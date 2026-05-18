@@ -215,6 +215,46 @@ def download_many(rows, workers=4):
 
 Keep `workers` low (4–6). UHC's CDN throttles aggressive parallelism and you'll start getting 429s. Log every URL + status to a CSV so you can pick up where you left off.
 
+### 3.2 Size limits and safety valves
+
+Not every file is safe to download. Some files claim to be 300 MB but decompress to 10+ GB. Set safety limits to prevent disk exhaustion and memory issues:
+
+- **Compressed file limit: 1 GB** — skip files larger than 1GB compressed. These are statistical outliers and often contain the same data as smaller files for the same plan.
+- **Decompressed limit: 3 GB** — during decompression, stop if the file exceeds 3GB. This prevents disk exhaustion and memory spikes.
+- **Chunk-based decompression: 8 MB chunks** — decompress in small chunks rather than loading the entire file. This keeps memory constant even with large files.
+
+When a file is skipped, log it with the reason (too large compressed / too large decompressed). This way you can justify to the interviewer why you excluded it.
+
+```python
+def download_one(url, out_dir="data/raw", max_size_gb=1.0, max_unzip_size_gb=3.0):
+    # Check file size before downloading
+    h = requests.head(url)
+    file_size = int(h.headers.get("Content-Length", 0))
+    if file_size > max_size_gb * 1024**3:
+        return None, f"skipped (too large: {file_size / (1024**3):.1f} GB)"
+    
+    # Download in chunks
+    with requests.get(url, stream=True) as r:
+        with open(out, "wb") as f:
+            for chunk in r.iter_content(8 * 1024 * 1024):
+                f.write(chunk)
+    
+    # Decompress with safety limit
+    max_decompress = max_unzip_size_gb * 1024**3
+    with gzip.open(out, "rb") as f_in:
+        with open(json_out, "wb") as f_out:
+            bytes_written = 0
+            for chunk in iter(lambda: f_in.read(8 * 1024 * 1024), b""):
+                bytes_written += len(chunk)
+                if bytes_written > max_decompress:
+                    return None, f"skipped (decompression exceeded {max_unzip_size_gb}GB)"
+                f_out.write(chunk)
+    
+    return json_out, "ok"
+```
+
+The interviewer will ask "why these specific limits". Answer: "1GB compressed covers 99% of UHC's files, and 3GB uncompressed allows us to process them on a laptop without exhausting disk or memory. Anything larger is an outlier that we flag and can handle separately if needed."
+
 ### 3.3 The "you can't keep all 1000 files" reality
 
 Do **stream-parse → write parquet → delete the raw file** in a loop. The intermediate parquet of just the columns you care about is roughly 1/30th the size of the raw gz. So 1000 files at ~300 MB raw compressed = 300 GB; the parquet output is 8–12 GB total. That fits.
