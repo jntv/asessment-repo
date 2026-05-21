@@ -12,6 +12,7 @@ from config import upload_to_s3, S3_PREFIX, STORAGE_MODE, validate_aws_config
 logger = logging.getLogger(__name__)
 
 def get_memory_mb():
+    # returns current process memory usage in megabytes, useful for spotting leaks
     return psutil.Process().memory_info().rss / 1024 / 1024
 
 # Parse ALL code types - don't filter, let Snowflake handle filtering if needed
@@ -32,6 +33,7 @@ def flatten(file_path):
     file_path_str = str(file_path)
 
     # Try to open as gzip first if it has .gz extension, fall back to plain JSON
+    # some files claim to be gzipped but arent, so we test by reading a byte
     f = None
     if file_path_str.endswith(".gz"):
         try:
@@ -50,17 +52,19 @@ def flatten(file_path):
 
     try:
         # Use ijson for both .gz and .json files (streaming, not loading into memory)
+        # these files can be multiple GB so we must stream them, not load all at once
         parser = ijson.parse(f)
         scalars = {}
 
-        # Extract scalar values from top level
+        # Extract scalar values from top level - we grab these before reaching in_network
+        # so every row we yield already has the plan metadata attached
         for prefix, evt, val in parser:
             if prefix in ("reporting_entity_name", "plan_name", "plan_id", "plan_market_type", "last_updated_on"):
                 scalars[prefix] = val
             if prefix == "in_network" and evt == "start_array":
                 break
 
-        # Stream through in_network items
+        # Stream through in_network items - each item is one billing code with nested rates
         for inn in ijson.items(parser, "in_network.item", multiple_values=False):
             # Process ALL code types (CPT, HCPCS, MS-DRG, RC, CDT, NDC, etc.)
             # No filtering - get complete dataset
@@ -70,6 +74,7 @@ def flatten(file_path):
                     tin = pg.get("tin") or {}
                     for price in nr.get("negotiated_prices", []):
                         # Safely build service_codes and modifiers, defaulting to empty string if problematic
+                        # these fields can sometimes contain None values so we filter those out
                         try:
                             service_codes = ",".join(str(x) for x in (price.get("service_code") or []) if x is not None) or None
                         except (TypeError, ValueError):
@@ -80,6 +85,7 @@ def flatten(file_path):
                         except (TypeError, ValueError):
                             modifiers = None
 
+                        # yield one flat row per price entry - joins plan, service, provider and price info
                         yield {
                             "plan_name": scalars.get("plan_name"),
                             "plan_id": scalars.get("plan_id"),
@@ -103,17 +109,20 @@ def flatten(file_path):
                             "modifiers": modifiers,
                         }
     finally:
+        # always close the file handle even if something went wrong mid-stream
         f.close()
 
 
 def file_to_parquet(in_path, out_dir="data/parquet", batch=1000):
     """Convert JSON file to Parquet format"""
     out_dir = Path(out_dir)
+    # the parquet file gets the same name as the json but with .parquet extension
     out_path = out_dir / (Path(in_path).stem + ".parquet")
     out_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info(f"[PARSE] Starting parse: {Path(in_path).name}")
 
+    # skip if we already parsed this file - saves a lot of time on reruns
     if out_path.exists():
         logger.info(f"[PARSE] Skipped (already exists): {out_path.name}")
         return out_path, "skipped"
@@ -131,15 +140,18 @@ def file_to_parquet(in_path, out_dir="data/parquet", batch=1000):
             if row_count % (batch * 10) == 0:
                 logger.info(f"[PARSE] Progress: {row_count} rows")
 
+            # flush to parquet every batch rows to keep memory usage low
             if len(buf) >= batch:
                 logger.info(f"[PARSE] Writing batch: {len(buf)} rows")
                 tbl = pa.Table.from_pylist(buf)
+                # create the writer on first batch so we can infer schema from actual data
                 if writer is None:
                     logger.info(f"[PARSE] Creating parquet writer with schema")
                     writer = pq.ParquetWriter(out_path, tbl.schema, compression="zstd")
                 writer.write_table(tbl)
                 buf = []
 
+        # write whatever rows are left in the buffer after the main loop finishes
         if buf:
             logger.info(f"[PARSE] Writing final batch: {len(buf)} rows")
             tbl = pa.Table.from_pylist(buf)
@@ -154,18 +166,20 @@ def file_to_parquet(in_path, out_dir="data/parquet", batch=1000):
 
         logger.info(f"[PARSE] Complete: {row_count} rows parsed")
     except Exception as e:
+        # delete partial parquet file so next run can start fresh without corrupt data
         logger.exception(f"[PARSE] Error at row {row_count}: {e}")
         if out_path.exists():
             out_path.unlink()
         return None, f"error: {e}"
 
-    # Check if any rows were actually parsed
+    # Check if any rows were actually parsed - empty file means something was wrong with the JSON
     if row_count == 0:
         logger.warning(f"[PARSE] No rows parsed from {Path(in_path).name}")
         return None, "error: 0 rows parsed, no file created"
 
     if STORAGE_MODE == "S3":
         try:
+            # upload to s3 and then delete local copy to save disk space
             logger.info(f"[PARSE] Uploading to S3...")
             s3_key = f"{S3_PREFIX}{out_path.name}"
             s3_uri = upload_to_s3(str(out_path), s3_key)
@@ -177,22 +191,27 @@ def file_to_parquet(in_path, out_dir="data/parquet", batch=1000):
             logger.exception(f"[PARSE] S3 upload error: {s3_error}")
             return None, f"error uploading to S3: {s3_error}"
     else:
+        # in local mode just return the path to the parquet file we created
         return str(out_path), f"ok ({row_count} rows, saved to {out_path})"
 
 
 def parse_all(raw_dir="files/network_files", out_dir="data/parquet"):
     """Parse all JSON files to Parquet"""
     raw_dir = Path(raw_dir)
+    # find all json files in the raw directory and sort them for consistent ordering
     raw_files = sorted(raw_dir.glob("*.json"))
     print(f"Found {len(raw_files)} files")
 
     log_data = []
     for json_file in tqdm(raw_files):
+        # convert each file and collect the status for the final log
         out_path, status = file_to_parquet(json_file, out_dir)
         log_data.append((json_file.name, status))
+        # delete the source json once we know the parquet was created successfully
         if "ok" in status and json_file.exists():
             json_file.unlink()
 
+    # write a summary csv so we can see which files parsed ok and which ones failed
     import csv
     log_path = Path("files/index_file/parse_log.csv")
     log_path.parent.mkdir(parents=True, exist_ok=True)

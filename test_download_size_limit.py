@@ -5,6 +5,7 @@ Test script for download size limit feature
 
 def test_size_calculation():
     """Test the size calculation logic"""
+    # verify that the bytes comparison logic correctly decides to skip or download each file size
     max_size_gb = 2
     max_size_bytes = max_size_gb * 1024**3
 
@@ -23,6 +24,7 @@ def test_size_calculation():
 
     for file_size, label, should_download in test_cases:
         size_gb = file_size / (1024**3)
+        # this mirrors the exact logic in download_one - files at or below limit are downloaded
         will_download = file_size <= max_size_bytes
         status = "DOWNLOAD" if will_download else "SKIP"
 
@@ -38,6 +40,7 @@ def test_size_calculation():
 
 def test_syntax():
     """Test Python syntax of download.py"""
+    # uses py_compile to check the file compiles without errors before we even try to run it
     import py_compile
     try:
         py_compile.compile("src/download.py", doraise=True)
@@ -50,13 +53,14 @@ def test_syntax():
 
 def test_imports():
     """Test that the module can be imported"""
+    # tries to actually import download_one and check that max_size_gb param exists on it
     try:
         import sys
         sys.path.insert(0, "src")
         from download import download_one
         print("[PASS] Successfully imported download_one function")
 
-        # Check function signature
+        # Check function signature - make sure the size limit parameter is actually there
         import inspect
         sig = inspect.signature(download_one)
         params = list(sig.parameters.keys())

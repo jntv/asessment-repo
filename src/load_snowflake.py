@@ -9,10 +9,11 @@ def setup_s3_stage(cur):
     """Create S3 external stage in Snowflake"""
     from config import SF_S3_ROLE, S3_BUCKET, S3_PREFIX
 
+    # s3 role is needed for the storage integration, fail fast if its not configured
     if not SF_S3_ROLE:
         raise ValueError("SF_S3_ROLE not set in .env. Required for S3 external stage.")
 
-    # Create or replace S3 stage
+    # Create or replace S3 stage - points snowflake at our parquet prefix in s3
     stage_sql = f"""
     CREATE OR REPLACE STAGE s3_stage
         STORAGE_INTEGRATION = s3_int
@@ -25,6 +26,7 @@ def setup_s3_stage(cur):
         print("[OK] S3 stage ready")
     except Exception as e:
         # Stage might already exist; verify with a list command
+        # creation can fail if stage already exists, so we verify access instead of just failing
         try:
             cur.execute("LIST @s3_stage LIMIT 1")
             print("[OK] S3 stage exists and is accessible")
@@ -34,6 +36,7 @@ def setup_s3_stage(cur):
 
 def load_snowflake():
     """Load parquet files from S3 into Snowflake"""
+    # open a snowflake connection using credentials from environment variables
     conn = snowflake.connector.connect(
         user=os.environ["SF_USER"],
         password=os.environ["SF_PASSWORD"],
@@ -49,7 +52,7 @@ def load_snowflake():
         print("Loading parquet files from S3 to Snowflake...")
         print(f"S3 Bucket: {os.environ['S3_BUCKET']}")
         print(f"S3 Prefix: {os.environ.get('S3_PREFIX', 'parquet/')}")
-        # Setup S3 stage
+        # make sure s3 external stage is set up before we try to copy from it
         setup_s3_stage(cur)
         stage_name = "@s3_stage"
     else:
@@ -59,6 +62,7 @@ def load_snowflake():
         parquet_dir = Path("data/parquet")
         parquet_files = list(parquet_dir.glob("*.parquet"))
 
+        # nothing to do if there are no parquet files yet
         if not parquet_files:
             print("No parquet files found in data/parquet/")
             conn.close()
@@ -66,6 +70,7 @@ def load_snowflake():
 
         print(f"Found {len(parquet_files)} parquet files to upload")
         print("Uploading to internal stage...")
+        # PUT each parquet file up to snowflakes internal stage one by one
         for pf in parquet_files:
             cur.execute(f"PUT file://{pf.absolute()} @pq_stage")
             print(f"  [OK] {pf.name}")
@@ -73,6 +78,7 @@ def load_snowflake():
         stage_name = "@pq_stage"
 
     # COPY all files from stage to table
+    # ON_ERROR CONTINUE means bad rows are skipped rather than failing the whole load
     print(f"Copying from {stage_name} to table...")
     copy_sql = f"""
     COPY INTO rates_raw (
@@ -113,7 +119,7 @@ def load_snowflake():
     cur.execute(copy_sql)
     print("COPY completed")
 
-    # Get load stats
+    # Get load stats - just a quick row count to confirm data actually landed
     cur.execute("SELECT COUNT(*) FROM rates_raw")
     row_count = cur.fetchone()[0]
     print(f"Total rows loaded: {row_count:,}")
